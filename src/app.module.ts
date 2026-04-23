@@ -1,11 +1,19 @@
+import { SequelizeModuleOptions } from './../node_modules/@nestjs/sequelize/dist/interfaces/sequelize-options.interface.d';
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { UserModule } from './user/user.module';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { SequelizeModule } from '@nestjs/sequelize';
+import { sequelizeConfig } from './config/sequelize.config';
 
 @Module({
-  controllers: [AppController],
-  providers: [AppService],
-  imports: [UserModule],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    SequelizeModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService): SequelizeModuleOptions =>
+        sequelizeConfig(configService),
+    }),
+  ],
 })
 export class AppModule {}
