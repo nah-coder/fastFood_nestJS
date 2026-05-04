@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { sequelizeConfig } from './config/sequelize.config';
+import { UserModule } from './module/user/user.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { sequelizeConfig } from './config/sequelize.config';
       useFactory: (configService: ConfigService): SequelizeModuleOptions =>
         sequelizeConfig(configService),
     }),
+    UserModule,
   ],
 })
 export class AppModule {}

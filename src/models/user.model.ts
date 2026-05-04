@@ -1,4 +1,9 @@
-import { Column, DataType, Model, Table } from 'sequelize-typescript';
+import { Column, DataType, HasMany, HasOne, Model, Table } from 'sequelize-typescript';
+import { Address } from './address.model';
+import { Order } from './order.model';
+import { Cart } from './cart.model';
+import { UserCoupon } from './user-coupon.model';
+import { Review } from './review.model';
 
 export enum UserRoles{
     ADMIN = 'ADMIN',
@@ -21,4 +26,26 @@ export class User extends Model<User> {
 
     @Column({ type: DataType.STRING, allowNull: true })
     phone!: string;
+
+    @Column({ type: DataType.ENUM(...Object.values(UserRoles)), defaultValue: UserRoles.CUSTOMER, allowNull: false })
+    role!: UserRoles;
+
+    @Column({ type: DataType.STRING, allowNull: true })
+    provider!: string;
+
+    //relationships
+    @HasMany(() => Order)
+    orders!: Order[];
+
+    @HasMany(() => Address)
+    addresses!: Address[];
+
+    @HasOne(() => Cart)
+    cart!: Cart;
+
+    @HasMany(() => UserCoupon)
+    userCoupons!: UserCoupon[];
+
+    @HasMany(() => Review)
+    reviews!: Review[];
 }
