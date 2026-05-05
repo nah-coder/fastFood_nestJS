@@ -34,6 +34,11 @@ export class TransformInterceptor<T> implements NestInterceptor<
   ): Observable<ApiResponse<T>> {
     const request = context.switchToHttp().getRequest<Request>();
 
+    const startTime = Number(request['startTime'] || Date.now());
+
+    const endTime = Date.now();
+    const takenTime = `${endTime - startTime}ms`;
+
     return next.handle().pipe(
       map((data: any) => {
         if (data && typeof data === 'object' && 'success' in data) {
@@ -57,8 +62,9 @@ export class TransformInterceptor<T> implements NestInterceptor<
           success: true,
           message,
           data,
-          date: new Date(),
+          date: new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour12: false }),
           path: request.url,
+          takenTime,
         };
       }),
     );

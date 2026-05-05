@@ -1,0 +1,56 @@
+import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus, Logger } from '@nestjs/common';
+import { Request, Response } from 'express';
+import path from 'path';
+import { ApiResponse } from '../interfaces';
+
+@Catch()
+export class AllExceptionFilter implements ExceptionFilter {
+    private readonly logger = new Logger(AllExceptionFilter.name);
+  catch(exception: unknown, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
+    const response = ctx.getResponse<Response>();
+    const request = ctx.getRequest<Request>();
+
+    const startTime = Number(request['startTime'] || Date.now());
+
+    const endTime = Date.now();
+    const takenTime = `${endTime - startTime}ms`;
+
+    let status: number;
+    let message: string = 'Có lỗi xảy ra.';
+    let error: any;
+
+    if(exception instanceof HttpException) {
+      status = exception.getStatus();
+      const exceptionResponse = exception.getResponse();
+      if (typeof exceptionResponse === 'string') {
+        message = exceptionResponse;  
+      } else if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
+        const exceptionResponseObj = exceptionResponse as Record<string, any>;
+        message = exceptionResponseObj.message || exceptionResponseObj.error || 'Có lỗi xảy ra.';
+
+        if(Array.isArray(exceptionResponseObj.message)) {
+          message = "Dữ liệu không hợp lệ.";
+          error = exceptionResponseObj.message;
+        }
+      }else {
+        message = 'Có lỗi xảy ra.';
+      }
+    } else {
+      status = HttpStatus.INTERNAL_SERVER_ERROR;
+      message = 'Hệ thống đang có lỗi. Vui lòng thử lại sau.';
+      this.logger.error(`Unhandled exception: ${exception instanceof Error ? exception.stack : JSON.stringify(exception)}`);
+    }
+
+    const errResponse: ApiResponse<any> = {
+      success: false,
+      message,
+      ... (error && { error }),
+      date: new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour12: false }),
+      path: request.url,
+      takenTime,
+    };
+
+    response.status(status).json(errResponse);
+  }
+}
