@@ -4,6 +4,7 @@ import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { TransformInterceptor } from './common/interceptors/response.interceptor';
 import { AllExceptionFilter } from './common/filters/all-exception.filter';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -22,6 +23,17 @@ async function bootstrap() {
   app.useGlobalInterceptors(new TransformInterceptor());
 
   app.useGlobalFilters(new AllExceptionFilter());
+
+  const config = new DocumentBuilder()
+    .setTitle('fastfood-api')
+    .setDescription('Xây dưng API cho hệ thống quản lý cửa hàng thức ăn nhanh')
+    .setVersion('1.0')
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/v1/docs', app, document);
+
+  app.setGlobalPrefix('api/v1');
 
   const port = configService.get<number>('PORT') || 5002;
   logger.log(`Starting server on port ${port}...`);

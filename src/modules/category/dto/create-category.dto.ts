@@ -1,23 +1,17 @@
 import { Type } from 'class-transformer';
-import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
+import { BooleanNotRequired, NumberNotRequired, StringNotRequired, StringRequired } from 'src/decorator';
 
 export class CategoryDto {
-  @IsString({ message: 'Name must be a string' })
+  @StringRequired('Name')
   name!: string;
 
-  @IsString({ message: 'Slug must be a string' })
-  slug!: string;
-
-  @IsString({ message: 'Description must be a string' })
-  @IsOptional() // Optional field
+  @StringNotRequired('Description')
   description?: string;
 
-  @IsOptional()
-  @Type(() => Number) // Transform to number
-  @IsNumber()
+  @NumberNotRequired('Sort Order')
+  @Type(() => Number) // Chuyển đổi giá trị sang kiểu number
   sortOrder?: number;
 
-  @IsOptional()
-  @IsBoolean({ message: 'Active status must be a boolean' })
+  @BooleanNotRequired('Is Active')
   isActive?: boolean;
 }

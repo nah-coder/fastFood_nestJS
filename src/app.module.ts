@@ -4,8 +4,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { sequelizeConfig } from './config/sequelize.config';
 import { CategoryModule } from './modules/category/category.module';
-import { UserModule } from './modules/user/user.module';
 import { StartTimingMiddleware } from './common/middlewares/start-timing.middlewwares';
+import { UserModule } from './modules/user/user.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -17,8 +18,9 @@ import { StartTimingMiddleware } from './common/middlewares/start-timing.middlew
       useFactory: (configService: ConfigService): SequelizeModuleOptions =>
         sequelizeConfig(configService),
     }),
-    UserModule,
     CategoryModule,
+    UserModule,
+    AuthModule,
   ],
 })
 export class AppModule implements NestModule {
