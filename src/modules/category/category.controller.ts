@@ -8,11 +8,14 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 import { CategoryService } from './category.service';
 import { CategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { JwtGuard } from '../auth/guards/jwt.guard';
 
 @ApiBearerAuth() // Nếu có bảo mật bằng JWT, thêm dòng này để hiển thị nút "Authorize" trong Swagger
 @ApiTags('Danh mục')
@@ -30,9 +33,10 @@ export class CategoryController {
     return await this.categoryService.create(categoryDto);
   }
 
+  @UseGuards(JwtGuard)
   @ApiResponse ({ status: HttpStatus.OK, description: 'Categories retrieved successfully' })
   @Get('all')
-  async getAllCategories() {
+  async getAllCategories(@Req() req:any) {
     return await this.categoryService.findAll();
   }
 

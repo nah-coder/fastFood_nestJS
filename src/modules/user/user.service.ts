@@ -2,11 +2,13 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { User } from 'src/models';
 import { CreateUserDto } from './dto/create-user.dto';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class UserService {
-  constructor(@InjectModel(User) private readonly userModel: typeof User) {}
+  constructor(@InjectModel(User) private readonly userModel: typeof User, private readonly jwtService: JwtService) {}
 
+  
   async findByEmail(email: string) {
     return await this.userModel.findOne({ where: { email } });
   }
@@ -21,7 +23,9 @@ export class UserService {
     if (!isPasswordValid) throw new BadRequestException('Invalid credentials');
 
     // trả token
-    return { message: 'Login successful', data: user.getUserWithoutPassword() };
+
+    const plainUser = user.toJSON();
+    return {id: plainUser.id, email: plainUser.email, role: plainUser.role};
   }
 
   async register(createUserDto: CreateUserDto) {
