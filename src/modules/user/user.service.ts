@@ -1,48 +1,37 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { User } from 'src/models';
-import * as bcrypt from 'bcryptjs';
 import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
 export class UserService {
-    constructor(
-        @InjectModel(User) private readonly userModel: typeof User,
-    ){}
+  constructor(@InjectModel(User) private readonly userModel: typeof User) {}
 
-    async findByEmail(email: string) {
-        return await this.userModel.findOne({ where: { email }, raw: true });
-    }
+  async findByEmail(email: string) {
+    return await this.userModel.findOne({ where: { email } });
+  }
 
-    async validateUser(email: string, password: string): Promise<any> {
-        const alreadyExists = await this.findByEmail(email);
+  async validateUser(email: string, password: string): Promise<any> {
+    const user = await this.findByEmail(email);
 
-        if(!alreadyExists) throw new BadRequestException('User not found');
+    if (!user) throw new BadRequestException('User not found');
 
-        // const isPasswordValid = await bcrypt.compare(password, alreadyExists.password);
+    const isPasswordValid = user.comparePassword(password);
 
-        // if(isPasswordValid) {
-        //     const { password, ...result } = alreadyExists.toJSON();
-        //     return result;
-        // }
-        
-        return {message: 'Invalid credentials', data: alreadyExists};
-    }
+    if (!isPasswordValid) throw new BadRequestException('Invalid credentials');
 
-    async register(createUserDto: CreateUserDto) {
-        const alreadyExists = await this.findByEmail(createUserDto.email);
+    // trả token
+    return { message: 'Login successful', data: user.getUserWithoutPassword() };
+  }
 
-        if(alreadyExists) throw new BadRequestException('User already exists');
-        const hashedPassword = await bcrypt.hashSync(createUserDto.password, 10);
+  async register(createUserDto: CreateUserDto) {
+    const alreadyExists = await this.findByEmail(createUserDto.email);
 
-        const payload = {
-            ...createUserDto,
-            password: hashedPassword,
-        }
+    if (alreadyExists) throw new BadRequestException('User already exists');
 
-        // trasaction
-        await this.userModel.create(payload as any);
+    // trasaction
+    await this.userModel.create(createUserDto as any);
 
-        return {message: 'User created successfully'};
-    }
+    return { message: 'User created successfully' };
+  }
 }

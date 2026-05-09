@@ -7,7 +7,7 @@ import { CategoryModule } from './modules/category/category.module';
 import { StartTimingMiddleware } from './common/middlewares/start-timing.middlewwares';
 import { UserModule } from './modules/user/user.module';
 import { AuthModule } from './modules/auth/auth.module';
-
+import { JwtModule } from '@nestjs/jwt';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -21,6 +21,13 @@ import { AuthModule } from './modules/auth/auth.module';
     CategoryModule,
     UserModule,
     AuthModule,
+    JwtModule.registerAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get('JWT_SECRET') || 'default_secret',
+        signOptions: { expiresIn: configService.get('JWT_EXPIRES_IN') || '1d' },
+      }),
+    }),
   ],
 })
 export class AppModule implements NestModule {

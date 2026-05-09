@@ -1,51 +1,86 @@
-import { Column, DataType, HasMany, HasOne, Model, Table } from 'sequelize-typescript';
+import {
+  BeforeValidate,
+  Column,
+  DataType,
+  HasMany,
+  HasOne,
+  Model,
+  Table,
+} from 'sequelize-typescript';
 import { Address } from './address.model';
 import { Order } from './order.model';
 import { Cart } from './cart.model';
 import { UserCoupon } from './user-coupon.model';
 import { Review } from './review.model';
+import * as bcrypt from 'bcryptjs';
 
-export enum UserRoles{
-    ADMIN = 'ADMIN',
-    CUSTOMER = 'CUSTOMER',
+export enum UserRoles {
+  ADMIN = 'ADMIN',
+  CUSTOMER = 'CUSTOMER',
 }
 
 @Table
 export class User extends Model<User> {
-    @Column({ type: DataType.STRING, unique: true, allowNull: false })
-    email!: string;
+  @Column({ type: DataType.STRING, unique: true, allowNull: false })
+  email!: string;
 
-    @Column({ type: DataType.STRING, allowNull: false })
-    password!: string;
+  @Column({ type: DataType.STRING, allowNull: false })
+  password!: string;
 
-    @Column({ type: DataType.STRING, allowNull: false })
-    name!: string;
+  @Column({ type: DataType.STRING, allowNull: false })
+  name!: string;
 
-    @Column({ type: DataType.STRING, allowNull: true })
-    avatar!: string;
+  @Column({ type: DataType.STRING, allowNull: true })
+  avatar!: string;
 
-    @Column({ type: DataType.STRING, allowNull: true })
-    phone!: string;
+  @Column({ type: DataType.STRING, allowNull: true })
+  phone!: string;
 
-    @Column({ type: DataType.ENUM(...Object.values(UserRoles)), defaultValue: UserRoles.CUSTOMER, allowNull: false })
-    role!: UserRoles;
+  @Column({
+    type: DataType.ENUM(...Object.values(UserRoles)),
+    defaultValue: UserRoles.CUSTOMER,
+    allowNull: false,
+  })
+  role!: UserRoles;
 
-    @Column({ type: DataType.STRING, allowNull: true })
-    provider!: string;
+  @Column({ type: DataType.STRING, allowNull: true })
+  provider!: string;
 
-    //relationships
-    @HasMany(() => Order)
-    orders!: Order[];
+  //relationships
+  @HasMany(() => Order)
+  orders!: Order[];
 
-    @HasMany(() => Address)
-    addresses!: Address[];
+  @HasMany(() => Address)
+  addresses!: Address[];
 
-    @HasOne(() => Cart)
-    cart!: Cart;
+  @HasOne(() => Cart)
+  cart!: Cart;
 
-    @HasMany(() => UserCoupon)
-    userCoupons!: UserCoupon[];
+  @HasMany(() => UserCoupon)
+  userCoupons!: UserCoupon[];
 
-    @HasMany(() => Review)
-    reviews!: Review[];
+  @HasMany(() => Review)
+  reviews!: Review[];
+
+  comparePassword(password: string) {
+    const { password: hashedPassword } = this.get({ plain: true });
+    // so sánh password đã hash với password nhập vào
+    return bcrypt.compareSync(password, hashedPassword);
+  }
+
+  getUserWithoutPassword() {
+    const { password: _, ...userWithoutPassword } = this.get({ plain: true });
+    return userWithoutPassword;
+  }
+
+  @BeforeValidate
+  static hashPassword(user: User) {
+    if (user.isNewRecord) {
+      const password = user.get('password');
+
+      const hashedPassword = bcrypt.hashSync(password, 10);
+
+      user.setDataValue('password', hashedPassword);
+    }
+  }
 }
