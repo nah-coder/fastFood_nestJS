@@ -1,9 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { Category } from 'src/models/category.model';
 import { CategoryDto } from './dto/create-category.dto';
 import { InjectModel } from '@nestjs/sequelize';
 import Helper from 'src/utils/helpers';
-import e from 'express';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @Injectable()
@@ -22,21 +21,19 @@ export class CategoryService {
     }
 
     await this.categoryModel.create(categoryDto as any);
-    
+
     return { message: 'Category created successfully' };
   }
 
   async findAll(): Promise<Category[]> {
-    return await this.categoryModel.findAll(
-      {
-        where: { isActive: true },
-        order: [['sortOrder', 'ASC']],
-        attributes: {
-          exclude: ['createdAt', 'updatedAt'],
-          // include: ['id', 'name', 'slug', 'description', 'sortOrder']
-        }
-      }
-    );
+    return await this.categoryModel.findAll({
+      where: { isActive: true },
+      order: [['sortOrder', 'ASC']],
+      attributes: {
+        exclude: ['createdAt', 'updatedAt'],
+        // include: ['id', 'name', 'slug', 'description', 'sortOrder']
+      },
+    });
   }
 
   async update(id: number, categoryDto: UpdateCategoryDto) {
@@ -46,24 +43,18 @@ export class CategoryService {
       throw new BadRequestException(`Category with id ${id} not found`);
     }
 
-    await alreadyExists.update(categoryDto as any);
+    await alreadyExists.update(categoryDto);
 
-    return {message: 'Category updated successfully'};
+    return { message: 'Category updated successfully' };
   }
 
   async delete(id: number) {
     await this.categoryModel.destroy({ where: { id }, cascade: true });
 
-    return {message: 'Category deleted successfully'};
+    return { message: 'Category deleted successfully' };
   }
 
-  // async findById(id: number): Promise<Category> {
-  //   const category = await this.categoryModel.findByPk(id);
-
-  //   if (!category) {
-  //     throw new NotFoundException(`Category with id ${id} not found`);
-  //   }
-
-  //   return category;
-  // }
+  async findOne(id: number) {
+    return await this.categoryModel.findByPk(id, { raw: true });
+  }
 }

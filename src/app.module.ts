@@ -8,6 +8,7 @@ import { StartTimingMiddleware } from './common/middlewares/start-timing.middlew
 import { UserModule } from './modules/user/user.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { JwtModule } from '@nestjs/jwt';
+import { ProductModule } from './modules/product/product.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -29,6 +30,7 @@ import { JwtModule } from '@nestjs/jwt';
         global: true,
       }),
     }),
+    ProductModule,
   ],
 })
 export class AppModule implements NestModule {

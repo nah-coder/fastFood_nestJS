@@ -1,15 +1,24 @@
-export {User, UserRoles} from './user.model';
-export {Category} from './category.model';
-export {Product} from './product.model';
-export {Order, OrderStatus, PaymentMethod, PaymentStatus} from './order.model';
-export {OrderItem} from './order-item.model';
-export {Address} from './address.model';
-export {Cart} from './cart.model';
-export {Ingredient} from './ingredient.model';
-export {ProductVariant} from './product-varriant.model';
-export {ProductIngredient} from './product-ingredient.model';
-export {OrderItemIngredient} from './order-item-ingredient.model';
-export {CartItems} from './cart-items.model';
-export {Coupon, CouponTypes} from './coupon.model';
-export {UserCoupon} from './user-coupon.model';
-export {Review} from './review.model';
+export { User, UserRoles } from './user.model';
+export { Category } from './category.model';
+export { Product } from './product.model';
+export {
+  Order,
+  OrderStatus,
+  PaymentMethod,
+  PaymentStatus,
+} from './order.model';
+export { OrderItem } from './order-item.model';
+export { Address } from './address.model';
+export { Cart } from './cart.model';
+export { Ingredient } from './ingredient.model';
+export {
+  ProductVariant,
+  ProductVariantSize,
+  ProductVariantType,
+} from './product-varriant.model';
+export { ProductIngredient } from './product-ingredient.model';
+export { OrderItemIngredient } from './order-item-ingredient.model';
+export { CartItems } from './cart-items.model';
+export { Coupon, CouponTypes } from './coupon.model';
+export { UserCoupon } from './user-coupon.model';
+export { Review } from './review.model';
