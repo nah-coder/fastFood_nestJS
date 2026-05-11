@@ -35,7 +35,7 @@ export class ProductIngredientDto {
   quantity!: number;
 
   @BooleanNotRequired('Default is optional')
-  default!: boolean; // Assuming you want to add a default boolean field to indicate if this ingredient is a default ingredient for the product
+  isDefault?: boolean; // Assuming you want to add a default boolean field to indicate if this ingredient is a default ingredient for the product
 }
 
 export class CreateProductDto {

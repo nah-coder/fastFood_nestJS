@@ -1,15 +1,16 @@
-import { Sequelize } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
 import { CreateProductDto, ProductVariantDto } from './dto/create-produt.dto';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/sequelize';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { CategoryService } from '../category/category.service';
 import Helper from 'src/utils/helpers';
 import { Product } from 'src/models/product.model';
-import { Ingredient, ProductIngredient, ProductVariant } from 'src/models';
+import { Category, Ingredient, ProductIngredient, ProductVariant } from 'src/models';
 
 @Injectable()
 export class ProductService {
   constructor(
+    @InjectConnection()
     private readonly sequelize: Sequelize,
     private readonly categoryService: CategoryService,
     @InjectModel(Product) private readonly productModel: typeof Product,
@@ -22,11 +23,40 @@ export class ProductService {
   ) {}
 
   async findOne(id: number) {
-    return this.productModel.findByPk(id, { raw: true });
+    return this.productModel.findByPk(id, {
+      raw: true,
+      include: [
+        {
+          model: ProductVariant,
+          attributes: {
+            include: [
+            [this.sequelize.literal(`"Product"."basePrice"+"productVariants"."modifierPrice"`), 'variantPrice', ]
+            ],
+            exclude: ['createdAt', 'updatedAt', 'modifierPrice'],
+          },
+          
+        },
+        {
+          model: Category,
+          attributes: { exclude: ['name', 'slug'] },
+        },
+        {
+          model: ProductIngredient,
+          attributes: { exclude: ['quantity', 'isDefault'] },
+          include: [
+            {
+              model: Ingredient,
+              attributes: { exclude: ['createdAt', 'updatedAt'] },
+            },
+          ],
+        }
+      ],
+      attributes: { exclude: ['createdAt', 'updatedAt'] },
+    });
   }
 
   async findBySlug(slug: string) {
-    return this.productModel.findByPk(slug, { raw: true });
+    return this.productModel.findOne({ where: { slug }, raw: true });
   }
 
   async create(createProductDto: CreateProductDto) {
@@ -94,7 +124,7 @@ export class ProductService {
             productId,
             ingredientId: ingredient.ingredientId,
             quantity: ingredient.quantity,
-            default: ingredient.default,
+            isDefault: ingredient.isDefault,
           }),
         );
         const alreadyExistIngredientIds = await this.ingredientModel.findAll({

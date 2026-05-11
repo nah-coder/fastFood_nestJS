@@ -13,7 +13,14 @@ import { JwtGuard } from './guards/jwt.guard';
   controllers: [AuthController],
   providers: [AuthService, LocalAuthGuard, LocalStrategy, JwtStrategy, JwtGuard],
   imports: [
-    UserModule
+    UserModule,
+    JwtModule.registerAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get('JWT_SECRET') || 'default_secret',
+        signOptions: { expiresIn: configService.get('JWT_EXPIRES_IN') || '1d' },
+      }),
+    }),
   ],
   exports: [AuthService, LocalAuthGuard, JwtGuard],
 })

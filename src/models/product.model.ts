@@ -11,6 +11,8 @@ import { Category } from './category.model';
 import { OrderItem } from './order-item.model';
 import { CartItems } from './cart-items.model';
 import { Review } from './review.model';
+import { ProductVariant } from './product-varriant.model';
+import { ProductIngredient } from './product-ingredient.model';
 
 @Table
 export class Product extends Model<Product> {
@@ -35,6 +37,9 @@ export class Product extends Model<Product> {
   @Column({ type: DataType.STRING, allowNull: true })
   imageUrl!: string;
 
+  @Column({ type: DataType.VIRTUAL(DataType.INTEGER) })
+  variantPrice!: number;
+
   @ForeignKey(() => Category)
   @Column({ type: DataType.INTEGER, allowNull: false })
   categoryId!: number;
@@ -51,4 +56,10 @@ export class Product extends Model<Product> {
 
   @HasMany(() => Review)
   reviews!: Review[];
+
+  @HasMany(() => ProductVariant)
+  productVariants!: ProductVariant[];
+
+  @HasMany(() => ProductIngredient)
+  productIngredients!: ProductIngredient[];
 }
