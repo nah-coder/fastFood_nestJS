@@ -1,3 +1,4 @@
+import { FilterProductDto } from './dto/filter-product.dto';
 import { Sequelize } from 'sequelize-typescript';
 import { CreateProductDto, ProductVariantDto } from './dto/create-produt.dto';
 import { BadRequestException, Injectable } from '@nestjs/common';
@@ -5,7 +6,14 @@ import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { CategoryService } from '../category/category.service';
 import Helper from 'src/utils/helpers';
 import { Product } from 'src/models/product.model';
-import { Category, Ingredient, ProductIngredient, ProductVariant } from 'src/models';
+import {
+  Category,
+  Ingredient,
+  ProductIngredient,
+  ProductVariant,
+} from 'src/models';
+import { Op } from 'sequelize';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class ProductService {
@@ -20,21 +28,27 @@ export class ProductService {
     private readonly ingredientModel: typeof Ingredient,
     @InjectModel(ProductIngredient)
     private readonly productIngredientModel: typeof ProductIngredient,
+    private readonly configService: ConfigService,
   ) {}
 
   async findOne(id: number) {
-    return this.productModel.findByPk(id, {
+    return this.productModel.findOne({
+      where: { id, isActive: true },
       raw: true,
       include: [
         {
           model: ProductVariant,
           attributes: {
             include: [
-            [this.sequelize.literal(`"Product"."basePrice"+"productVariants"."modifierPrice"`), 'variantPrice', ]
+              [
+                this.sequelize.literal(
+                  `"Product"."basePrice"+"productVariants"."modifiedPrice"`,
+                ),
+                'variantPrice',
+              ],
             ],
-            exclude: ['createdAt', 'updatedAt', 'modifierPrice'],
+            exclude: ['createdAt', 'updatedAt', 'modifiedPrice'],
           },
-          
         },
         {
           model: Category,
@@ -49,7 +63,7 @@ export class ProductService {
               attributes: { exclude: ['createdAt', 'updatedAt'] },
             },
           ],
-        }
+        },
       ],
       attributes: { exclude: ['createdAt', 'updatedAt'] },
     });
@@ -159,5 +173,90 @@ export class ProductService {
       await t.rollback();
       throw new BadRequestException('Failed to create product');
     }
+  }
+
+  async findAll(FilterProductDto: FilterProductDto) {
+    const {
+      search,
+      isActive,
+      isFeatured,
+      categoryId,
+      softBy,
+      sortOrder,
+      minPrice,
+      maxPrice,
+      page,
+      limit,
+    } = FilterProductDto;
+
+    const whereClause: any = {};
+
+    if (search !== undefined && search.trim() !== '') {
+      whereClause[Op.or] = [
+        { name: { [Op.iLike]: `%${search}%` } },
+        { description: { [Op.iLike]: `%${search}%` } },
+      ];
+    }
+
+    if (isActive !== undefined) {
+      whereClause['isActive'] = isActive;
+    }
+    if (isFeatured !== undefined) {
+      whereClause['isFeatured'] = isFeatured;
+    }
+    if (categoryId) {
+      whereClause['categoryId'] = categoryId;
+    }
+
+    const limitPage = Number(
+      limit || this.configService.get<number>('DEFAULT_PAGE_SIZE'),
+    );
+    const currentPage = Number(page || 1);
+    const offset = (currentPage - 1) * limitPage;
+
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      whereClause.basePrice = {};
+      if (minPrice !== undefined) {
+        whereClause.basePrice[Op.gte] = minPrice;
+      }
+      if (maxPrice !== undefined) {
+        whereClause.basePrice[Op.lte] = maxPrice;
+      }
+    }
+
+    let orderClause: any[] = [];
+    if (softBy && sortOrder) {
+      orderClause = [[softBy, sortOrder.toUpperCase()]];
+    } else {
+      orderClause = [['createdAt', 'DESC']];
+    }
+
+    const { rows, count } = await this.productModel.findAndCountAll({
+      where: whereClause,
+      order: orderClause,
+      limit: limitPage,
+      offset,
+    });
+
+    const totalItems = Array.isArray(count) ? count.length : count;
+    return {
+      items: rows,
+      paginationMeta: {
+        totalItems,
+        currentPage,
+        itemPerPage: limitPage,
+        totalPages: Math.ceil(count / limitPage),
+      },
+    };
+  }
+
+  async removeSoft(id: number) {
+    await this.productModel.update({ isActive: false }, { where: { id } });
+    return { message: 'Product has been deactivated successfully' };
+  }
+
+  async removeHard(id: number) {
+    await this.productModel.destroy({ where: { id }, cascade: true });
+    return { message: 'Product has been deleted successfully' };
   }
 }
